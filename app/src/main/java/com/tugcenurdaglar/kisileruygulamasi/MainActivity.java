@@ -6,6 +6,9 @@ import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 import android.content.DialogInterface;
 import android.os.Bundle;
@@ -20,6 +23,7 @@ import android.widget.Toast;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements SearchView.OnQueryTextListener {
     private Toolbar toolbar;
@@ -29,7 +33,8 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     private ArrayList<Kisiler> kisilerArrayList;
     private KisilerAdapter adapter;
 
-    private Veritabani vt;
+    private KisilerDaoInterface kisilerDaoInterface;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,8 +45,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         rv = findViewById(R.id.rv);
         fab = findViewById(R.id.fab);
 
-        vt = new Veritabani(this);
-
+        kisilerDaoInterface = ApiUtils.getKisilerDaoInterface();
 
         rv.setHasFixedSize(true);
         rv.setLayoutManager(new LinearLayoutManager(this));
@@ -49,11 +53,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
         toolbar.setTitle("Kişiler Uygulaması");
         setSupportActionBar(toolbar);
 
-        kisilerArrayList = new KisilerDao().tumKisiler(vt);
-
-        adapter = new KisilerAdapter(this,kisilerArrayList, vt);
-        rv.setAdapter(adapter);
-
+        tumKisiler();
 
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,10 +100,7 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
     public boolean onQueryTextChange(String newText) {//harf girdikçe veya sildikçe arama işlemi yapar
         Log.e("harf girdikçe", newText);
 
-        kisilerArrayList = new KisilerDao().kisiAra(vt,newText);
-
-        adapter = new KisilerAdapter(this,kisilerArrayList,vt);
-        rv.setAdapter(adapter);
+        arama(newText);
 
         return false;
     }
@@ -128,13 +125,17 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
                 String kisi_ad = editTextAd.getText().toString().trim();
                 String kisi_tel = editTextTel.getText().toString().trim();
 
-                new KisilerDao().kisiEkle(vt,kisi_ad,kisi_tel);
+                kisilerDaoInterface.kisiEkle(kisi_ad, kisi_tel).enqueue(new Callback<CRUDCevap>() {
+                    @Override
+                    public void onResponse(Call<CRUDCevap> call, Response<CRUDCevap> response) {
+                        tumKisiler();
+                    }
 
-                kisilerArrayList = new KisilerDao().tumKisiler(vt);
+                    @Override
+                    public void onFailure(Call<CRUDCevap> call, Throwable t) {
 
-                adapter = new KisilerAdapter(MainActivity.this, kisilerArrayList, vt);
-
-                rv.setAdapter(adapter);
+                    }
+                });
 
                 Toast.makeText(getApplicationContext(),kisi_ad+" - "+kisi_tel,Toast.LENGTH_SHORT).show();
 
@@ -150,6 +151,41 @@ public class MainActivity extends AppCompatActivity implements SearchView.OnQuer
 
         ad.create().show(); //artık alert tasarımını görebilirim
 
+    }
+
+    public void tumKisiler(){
+        kisilerDaoInterface.tumKisiler().enqueue(new Callback<KisilerCevap>() {
+            @Override
+            public void onResponse(Call<KisilerCevap> call, Response<KisilerCevap> response) {
+                List<Kisiler> liste = response.body().getKisiler();
+
+                adapter = new KisilerAdapter(MainActivity.this, liste, kisilerDaoInterface);
+                rv.setAdapter(adapter);
+            }
+
+            @Override
+            public void onFailure(Call<KisilerCevap> call, Throwable t) {
+
+            }
+        });
 
     }
+
+    public void arama(String kelime){
+        kisilerDaoInterface.kisiArama(kelime).enqueue(new Callback<KisilerCevap>() {
+            @Override
+            public void onResponse(Call<KisilerCevap> call, Response<KisilerCevap> response) {
+                List<Kisiler> liste = response.body().getKisiler();
+
+                adapter = new KisilerAdapter(MainActivity.this, liste, kisilerDaoInterface);
+                rv.setAdapter(adapter);
+            }
+
+            @Override
+            public void onFailure(Call<KisilerCevap> call, Throwable t) {
+
+            }
+        });
+    }
+
 }

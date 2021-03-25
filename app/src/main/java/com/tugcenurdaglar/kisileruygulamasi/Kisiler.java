@@ -1,40 +1,43 @@
+
 package com.tugcenurdaglar.kisileruygulamasi;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
 public class Kisiler {
-    private int kisi_id;
-    private String kisi_ad;
-    private String kisi_tel;
 
-    public Kisiler() {
+    @SerializedName("kisi_id")
+    @Expose
+    private String kisiId;
+    @SerializedName("kisi_ad")
+    @Expose
+    private String kisiAd;
+    @SerializedName("kisi_tel")
+    @Expose
+    private String kisiTel;
+
+    public String getKisiId() {
+        return kisiId;
     }
 
-    public Kisiler(int kisi_id, String kisi_ad, String kisi_tel) {
-        this.kisi_id = kisi_id;
-        this.kisi_ad = kisi_ad;
-        this.kisi_tel = kisi_tel;
+    public void setKisiId(String kisiId) {
+        this.kisiId = kisiId;
     }
 
-    public int getKisi_id() {
-        return kisi_id;
+    public String getKisiAd() {
+        return kisiAd;
     }
 
-    public void setKisi_id(int kisi_id) {
-        this.kisi_id = kisi_id;
+    public void setKisiAd(String kisiAd) {
+        this.kisiAd = kisiAd;
     }
 
-    public String getKisi_ad() {
-        return kisi_ad;
+    public String getKisiTel() {
+        return kisiTel;
     }
 
-    public void setKisi_ad(String kisi_ad) {
-        this.kisi_ad = kisi_ad;
+    public void setKisiTel(String kisiTel) {
+        this.kisiTel = kisiTel;
     }
 
-    public String getKisi_tel() {
-        return kisi_tel;
-    }
-
-    public void setKisi_tel(String kisi_tel) {
-        this.kisi_tel = kisi_tel;
-    }
 }

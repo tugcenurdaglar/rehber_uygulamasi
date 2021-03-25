@@ -19,17 +19,26 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class KisilerAdapter extends RecyclerView.Adapter<KisilerAdapter.CardTasarimTutucu> {
     private Context mContext;
     private List<Kisiler> kisilerListe;
 
-    private Veritabani vt;
+    private KisilerDaoInterface kisilerDaoInterface;
 
-    public KisilerAdapter(Context mContext, List<Kisiler> kisilerListe, Veritabani vt) {
+    public KisilerAdapter(Context mContext, List<Kisiler> kisilerListe, KisilerDaoInterface kisilerDaoInterface) {
         this.mContext = mContext;
         this.kisilerListe = kisilerListe;
-        this.vt = vt;
+        this.kisilerDaoInterface = kisilerDaoInterface;
+    }
+
+    public KisilerAdapter(Context mContext, List<Kisiler> kisilerListe) {
+        this.mContext = mContext;
+        this.kisilerListe = kisilerListe;
+
     }
 
     @NonNull
@@ -48,7 +57,7 @@ public class KisilerAdapter extends RecyclerView.Adapter<KisilerAdapter.CardTasa
 
         final Kisiler kisi = kisilerListe.get(position);
 
-        holder.textViewKisiBilgi.setText(kisi.getKisi_ad() + " - " + kisi.getKisi_tel());
+        holder.textViewKisiBilgi.setText(kisi.getKisiAd() + " - " + kisi.getKisiTel());
 
         holder.imageViewNokta.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,11 +74,20 @@ public class KisilerAdapter extends RecyclerView.Adapter<KisilerAdapter.CardTasa
                                         .setAction("Evet", new View.OnClickListener() {
                                             @Override
                                             public void onClick(View v) {
-                                                new KisilerDao().kisiSil(vt, kisi.getKisi_id());
+                                                kisilerDaoInterface.kisiSil(Integer.parseInt(kisi.getKisiId())).enqueue(new Callback<CRUDCevap>() {
+                                                    @Override
+                                                    public void onResponse(Call<CRUDCevap> call, Response<CRUDCevap> response) {
+                                                        tumKisiler();
+                                                    }
 
-                                                kisilerListe = new KisilerDao().tumKisiler(vt);
+                                                    @Override
+                                                    public void onFailure(Call<CRUDCevap> call, Throwable t) {
 
-                                                notifyDataSetChanged();//değişiklik olduğunda adaptere bilgi vermek için
+                                                    }
+                                                });
+
+
+//                                                notifyDataSetChanged();//değişiklik olduğunda adaptere bilgi vermek için
 
                                             }
                                         })
@@ -117,8 +135,8 @@ public class KisilerAdapter extends RecyclerView.Adapter<KisilerAdapter.CardTasa
         final EditText editTextAd = tasarim.findViewById(R.id.editTextAd);
         final EditText editTextTel = tasarim.findViewById(R.id.editTextTel);
 
-        editTextAd.setText(kisi.getKisi_ad());
-        editTextTel.setText(kisi.getKisi_tel());
+        editTextAd.setText(kisi.getKisiAd());
+        editTextTel.setText(kisi.getKisiTel());
 
         AlertDialog.Builder ad = new AlertDialog.Builder(mContext);
         ad.setTitle("Kişi Güncelle");
@@ -130,11 +148,19 @@ public class KisilerAdapter extends RecyclerView.Adapter<KisilerAdapter.CardTasa
                 String kisi_ad = editTextAd.getText().toString().trim();
                 String kisi_tel = editTextTel.getText().toString().trim();
 
-                new KisilerDao().kisiGuncelle(vt, kisi.getKisi_id(), kisi_ad, kisi_tel);
+                kisilerDaoInterface.kisiGuncelle(Integer.parseInt(kisi.getKisiId()),kisi_ad,kisi_tel).enqueue(new Callback<CRUDCevap>() {
+                    @Override
+                    public void onResponse(Call<CRUDCevap> call, Response<CRUDCevap> response) {
+                        tumKisiler();
+                    }
 
-                kisilerListe = new KisilerDao().tumKisiler(vt);
+                    @Override
+                    public void onFailure(Call<CRUDCevap> call, Throwable t) {
 
-                notifyDataSetChanged();
+                    }
+                });
+
+//                notifyDataSetChanged();
             }
         });
 
@@ -147,6 +173,23 @@ public class KisilerAdapter extends RecyclerView.Adapter<KisilerAdapter.CardTasa
 
         ad.create().show(); //artık alert tasarımını görebilirim
 
+
+    }
+
+    public void tumKisiler() {
+        kisilerDaoInterface.tumKisiler().enqueue(new Callback<KisilerCevap>() {
+            @Override
+            public void onResponse(Call<KisilerCevap> call, Response<KisilerCevap> response) {
+                kisilerListe = response.body().getKisiler();
+
+                notifyDataSetChanged();
+            }
+
+            @Override
+            public void onFailure(Call<KisilerCevap> call, Throwable t) {
+
+            }
+        });
 
     }
 
